@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Invoice extraction now returns `line_items` inside `fields` — each item has `description`, `quantity`, `unit_price`, and `amount` (`str | null`); extraction is language- and format-agnostic, using numeric token detection and region anchoring
+
 ## [0.2.0] - 2026-05-20
 
 ### Added

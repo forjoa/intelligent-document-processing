@@ -44,7 +44,21 @@ curl -X POST http://localhost:8000/documents/upload \
     "date": "May 1, 2026",
     "total": "1,250.00",
     "currency": "USD",
-    "invoice_number": "INV-20260501"
+    "invoice_number": "INV-20260501",
+    "line_items": [
+      {
+        "description": "Widget A",
+        "quantity": "2",
+        "unit_price": "500.00",
+        "amount": "1,000.00"
+      },
+      {
+        "description": "Shipping",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "250.00"
+      }
+    ]
   },
   "embedding_stored": true
 }

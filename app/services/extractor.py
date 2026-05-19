@@ -9,6 +9,13 @@ _INVOICE_NUM_RE = re.compile(r"(?:invoice\s*[#nNo.:]+\s*)([A-Z0-9\-]+)", re.IGNO
 _CURRENCY_RE = re.compile(r"(USD|EUR|GBP|CAD|AUD|\$|€|£)")
 _PRICE_RE = re.compile(r"[\$€£]?\s*\d{1,3}(?:[,.\s]\d{3})*(?:[.,]\d{2})?")
 _TOTAL_RE = re.compile(r"(?:total|amount due|balance due)[^\d]*([\$€£]?\s*[\d,. ]+)", re.IGNORECASE)
+_NUMERIC_TOKEN_RE = re.compile(
+    r"(?:[\$€£¥₹])?\s*\d{1,3}(?:[,.\s]\d{3})*(?:[.,]\d{2})?|\b\d+\b"
+)
+_TOTAL_ANCHOR_RE = re.compile(
+    r"^\s*(?:total|amount\s+due|balance\s+due|importe|monto|montant|gesamt|betrag|valor)\b",
+    re.IGNORECASE,
+)
 
 
 def extract_fields(text: str, document_type: str, nlp: Any) -> dict[str, Any]:
@@ -28,6 +35,44 @@ def extract_fields(text: str, document_type: str, nlp: Any) -> dict[str, Any]:
         raise ExtractionError(f"spaCy pipeline failed: {exc}") from exc
 
 
+def _extract_line_items(lines: list[str]) -> list[dict[str, str | None]]:
+    try:
+        n = len(lines)
+        header_end = max(1, n // 5)
+
+        total_idx = n
+        for i, line in enumerate(lines):
+            if _TOTAL_RE.search(line) or _TOTAL_ANCHOR_RE.match(line):
+                total_idx = i
+                break
+
+        item_start = total_idx
+        for i in range(header_end, total_idx):
+            if len(_NUMERIC_TOKEN_RE.findall(lines[i])) >= 1:
+                item_start = i
+                break
+
+        items = []
+        for line in lines[item_start:total_idx]:
+            tokens = _NUMERIC_TOKEN_RE.findall(line)
+            if not tokens:
+                continue
+            description = _NUMERIC_TOKEN_RE.sub("", line).strip() or None
+            if len(tokens) == 1:
+                items.append({"description": description, "quantity": None, "unit_price": None, "amount": tokens[0]})
+            elif len(tokens) == 2:
+                items.append({"description": description, "quantity": None, "unit_price": tokens[0], "amount": tokens[1]})
+            else:
+                qty, unit_price, amount = tokens[-3], tokens[-2], tokens[-1]
+                if len(tokens) > 3:
+                    prefix = " ".join(tokens[:-3])
+                    description = (prefix + " " + (description or "")).strip() or None
+                items.append({"description": description, "quantity": qty, "unit_price": unit_price, "amount": amount})
+        return items
+    except Exception:
+        return []
+
+
 def _extract_invoice(text: str, nlp: Any) -> dict[str, Any]:
     doc = nlp(text)
     company: str | None = next(
@@ -45,12 +90,16 @@ def _extract_invoice(text: str, nlp: Any) -> dict[str, Any]:
     inv_match = _INVOICE_NUM_RE.search(text)
     invoice_number: str | None = inv_match.group(1) if inv_match else None
 
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    line_items = _extract_line_items(lines)
+
     return {
         "company": company,
         "date": date,
         "total": total,
         "currency": currency,
         "invoice_number": invoice_number,
+        "line_items": line_items,
     }
 
 
