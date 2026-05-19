@@ -22,4 +22,16 @@ export interface SearchResponse {
   results: SearchResult[]
 }
 
+export interface DocumentListItem {
+  document_id: string
+  filename: string
+  document_type: string
+  created_at: string
+}
+
+export interface DocumentListResponse {
+  documents: DocumentListItem[]
+  total: number
+}
+
 export type Tab = 'upload' | 'search'

@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { searchDocuments } from '../api'
-import type { SearchResult } from '../types'
+import { useEffect, useState } from 'react'
+import { listDocuments, searchDocuments } from '../api'
+import type { DocumentListItem, SearchResult } from '../types'
 import { SearchResultCard } from './SearchResultCard'
 import { Spinner } from './Spinner'
 
@@ -12,6 +12,16 @@ export function SearchView(): JSX.Element {
   const [results, setResults] = useState<SearchResult[]>([])
   const [error, setError] = useState<string | null>(null)
   const [searched, setSearched] = useState(false)
+  const [documents, setDocuments] = useState<DocumentListItem[]>([])
+  const [docsLoading, setDocsLoading] = useState(true)
+  const [docsError, setDocsError] = useState<string | null>(null)
+
+  useEffect(() => {
+    listDocuments()
+      .then((res) => setDocuments(res.documents))
+      .catch((err) => setDocsError(err instanceof Error ? err.message : 'Failed to load documents.'))
+      .finally(() => setDocsLoading(false))
+  }, [])
 
   async function onSearch(): Promise<void> {
     const q = query.trim()
@@ -72,11 +82,41 @@ export function SearchView(): JSX.Element {
         <p className="text-sm text-gray-500">No results found.</p>
       )}
 
-      <div className="space-y-4">
-        {results.map((r) => (
-          <SearchResultCard key={r.document_id} result={r} />
-        ))}
-      </div>
+      {searched && results.length > 0 && (
+        <div className="space-y-4">
+          {results.map((r) => (
+            <SearchResultCard key={r.document_id} result={r} />
+          ))}
+        </div>
+      )}
+
+      {!searched && (
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Scanned documents</p>
+          {docsLoading && (
+            <div className="flex items-center gap-3 text-gray-600 text-sm">
+              <Spinner />
+              <span>Loading…</span>
+            </div>
+          )}
+          {docsError && (
+            <p className="text-sm text-gray-900 bg-gray-100 border border-gray-300 rounded px-4 py-3">{docsError}</p>
+          )}
+          {!docsLoading && !docsError && documents.length === 0 && (
+            <p className="text-sm text-gray-500">No documents scanned yet.</p>
+          )}
+          {!docsLoading && documents.length > 0 && (
+            <ul className="space-y-2">
+              {documents.map((doc) => (
+                <li key={doc.document_id} className="flex items-center justify-between border border-gray-200 rounded px-4 py-3 text-sm">
+                  <span className="font-medium text-gray-800 truncate">{doc.filename}</span>
+                  <span className="ml-4 shrink-0 text-xs text-gray-500 bg-gray-100 rounded px-2 py-0.5">{doc.document_type}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   )
 }

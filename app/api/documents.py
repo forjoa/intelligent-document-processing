@@ -4,11 +4,32 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.dependencies import get_embedder, get_nlp, get_paddle_ocr, get_session
-from app.models.schemas import DocumentResponse, SearchResponse, SearchResult
+from app.models.schemas import DocumentListItem, DocumentListResponse, DocumentResponse, SearchResponse, SearchResult
 from app.services.embedder import embed
 from app.services.pipeline import process_document
 
 router = APIRouter()
+
+
+@router.get("/documents", response_model=DocumentListResponse)
+async def list_documents(
+    session: AsyncSession = Depends(get_session),
+) -> DocumentListResponse:
+    stmt = text(
+        "SELECT id, filename, document_type, created_at FROM documents ORDER BY created_at DESC"
+    )
+    result = await session.execute(stmt)
+    rows = result.fetchall()
+    items = [
+        DocumentListItem(
+            document_id=row.id,
+            filename=row.filename,
+            document_type=row.document_type,
+            created_at=row.created_at.isoformat(),
+        )
+        for row in rows
+    ]
+    return DocumentListResponse(documents=items, total=len(items))
 
 
 @router.post("/documents/upload", response_model=DocumentResponse)

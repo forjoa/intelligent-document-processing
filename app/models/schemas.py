@@ -28,6 +28,18 @@ class SearchResponse(BaseModel):
     results: list[SearchResult]
 
 
+class DocumentListItem(BaseModel):
+    document_id: UUID
+    filename: str
+    document_type: str
+    created_at: str
+
+
+class DocumentListResponse(BaseModel):
+    documents: list[DocumentListItem]
+    total: int
+
+
 class HealthResponse(BaseModel):
     status: str
     detail: str | None = None
