@@ -16,7 +16,7 @@ async def list_documents(
     session: AsyncSession = Depends(get_session),
 ) -> DocumentListResponse:
     stmt = text(
-        "SELECT id, filename, document_type, created_at FROM documents ORDER BY created_at DESC"
+        "SELECT id, filename, document_type, created_at, extracted_fields FROM documents ORDER BY created_at DESC"
     )
     result = await session.execute(stmt)
     rows = result.fetchall()
@@ -26,6 +26,7 @@ async def list_documents(
             filename=row.filename,
             document_type=row.document_type,
             created_at=row.created_at.isoformat(),
+            fields=row.extracted_fields,
         )
         for row in rows
     ]

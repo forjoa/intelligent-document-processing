@@ -27,6 +27,7 @@ export interface DocumentListItem {
   filename: string
   document_type: string
   created_at: string
+  fields: Record<string, unknown>
 }
 
 export interface DocumentListResponse {

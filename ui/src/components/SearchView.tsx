@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { listDocuments, searchDocuments } from '../api'
 import type { DocumentListItem, SearchResult } from '../types'
+import { DocumentModal } from './DocumentModal'
 import { SearchResultCard } from './SearchResultCard'
 import { Spinner } from './Spinner'
 
@@ -15,6 +16,7 @@ export function SearchView(): JSX.Element {
   const [documents, setDocuments] = useState<DocumentListItem[]>([])
   const [docsLoading, setDocsLoading] = useState(true)
   const [docsError, setDocsError] = useState<string | null>(null)
+  const [selected, setSelected] = useState<DocumentListItem | null>(null)
 
   useEffect(() => {
     listDocuments()
@@ -48,6 +50,8 @@ export function SearchView(): JSX.Element {
   }
 
   return (
+    <>
+    {selected && <DocumentModal doc={selected} onClose={() => setSelected(null)} />}
     <div className="space-y-6">
       <div className="flex gap-3">
         <input
@@ -108,7 +112,11 @@ export function SearchView(): JSX.Element {
           {!docsLoading && documents.length > 0 && (
             <ul className="space-y-2">
               {documents.map((doc) => (
-                <li key={doc.document_id} className="flex items-center justify-between border border-gray-200 rounded px-4 py-3 text-sm">
+                <li
+                  key={doc.document_id}
+                  onClick={() => setSelected(doc)}
+                  className="flex items-center justify-between border border-gray-200 rounded px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 transition-colors"
+                >
                   <span className="font-medium text-gray-800 truncate">{doc.filename}</span>
                   <span className="ml-4 shrink-0 text-xs text-gray-500 bg-gray-100 rounded px-2 py-0.5">{doc.document_type}</span>
                 </li>
@@ -118,5 +126,6 @@ export function SearchView(): JSX.Element {
         </div>
       )}
     </div>
+    </>
   )
 }

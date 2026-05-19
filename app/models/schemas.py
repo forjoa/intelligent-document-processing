@@ -33,6 +33,7 @@ class DocumentListItem(BaseModel):
     filename: str
     document_type: str
     created_at: str
+    fields: dict[str, Any]
 
 
 class DocumentListResponse(BaseModel):
