@@ -5,6 +5,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
+from app.core.database import AsyncSessionLocal
 from app.core.exceptions import DatabaseError
 from app.models.db import Document
 from app.models.schemas import DocumentResponse
@@ -29,6 +30,7 @@ async def process_document(
 
     loop = asyncio.get_running_loop()
 
+    # Run heavy CPU-bound work before acquiring any DB connection.
     ocr_result = await loop.run_in_executor(
         None,
         lambda: run_ocr(images, paddle_ocr, settings.OCR_CONFIDENCE_THRESHOLD),
@@ -53,12 +55,13 @@ async def process_document(
         embedding=vector,
     )
 
+    # Open a fresh session for the insert so we never use a stale connection.
     try:
-        session.add(doc)
-        await session.commit()
-        await session.refresh(doc)
+        async with AsyncSessionLocal() as fresh_session:
+            fresh_session.add(doc)
+            await fresh_session.commit()
+            await fresh_session.refresh(doc)
     except Exception as exc:
-        await session.rollback()
         raise DatabaseError(f"Failed to persist document: {exc}") from exc
 
     return DocumentResponse(
