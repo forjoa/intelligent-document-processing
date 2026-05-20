@@ -15,8 +15,6 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 def get_paddle_ocr() -> Any:
-    if _paddle_ocr is None:
-        raise RuntimeError("PaddleOCR is not loaded")
     return _paddle_ocr
 
 
@@ -34,8 +32,11 @@ def get_embedder() -> Any:
 
 def load_paddle_ocr() -> None:
     global _paddle_ocr
-    from paddleocr import PaddleOCR
-    _paddle_ocr = PaddleOCR(use_angle_cls=True, lang="en", show_log=False)
+    try:
+        from paddleocr import PaddleOCR
+        _paddle_ocr = PaddleOCR(use_angle_cls=True, lang="en", show_log=False)
+    except ImportError:
+        _paddle_ocr = None
 
 
 def load_nlp() -> None:

@@ -66,10 +66,12 @@ def _run_tesseract(images: list[bytes]) -> tuple[str, float]:
 
 
 def run_ocr(images: list[bytes], paddle_ocr: Any, confidence_threshold: float) -> OCRResult:
-    paddle_text, paddle_conf = _run_paddle(images, paddle_ocr)
-
-    if paddle_conf >= confidence_threshold:
-        return OCRResult(text=paddle_text, confidence=paddle_conf, engine_used="paddleocr")
+    if paddle_ocr is not None:
+        paddle_text, paddle_conf = _run_paddle(images, paddle_ocr)
+        if paddle_conf >= confidence_threshold:
+            return OCRResult(text=paddle_text, confidence=paddle_conf, engine_used="paddleocr")
+    else:
+        paddle_text, paddle_conf = "", 0.0
 
     tesseract_text, tesseract_conf = _run_tesseract(images)
 

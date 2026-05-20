@@ -72,39 +72,10 @@ else
 fi
 
 # ── 4. Tesseract ──────────────────────────────────────────────────────────────
-install_tesseract() {
-  local os
-  os="$(uname -s)"
-  if [[ "$os" == "Darwin" ]]; then
-    if ! command -v brew &>/dev/null; then
-      fail "Homebrew not found. Install it from https://brew.sh and retry."
-    fi
-    warn "Installing Tesseract via Homebrew…"
-    brew install tesseract
-  elif [[ "$os" == "Linux" ]]; then
-    if command -v apt-get &>/dev/null; then
-      warn "Installing Tesseract via apt-get…"
-      sudo apt-get update -qq && sudo apt-get install -y -qq tesseract-ocr
-    elif command -v dnf &>/dev/null; then
-      warn "Installing Tesseract via dnf…"
-      sudo dnf install -y tesseract
-    elif command -v pacman &>/dev/null; then
-      warn "Installing Tesseract via pacman…"
-      sudo pacman -Sy --noconfirm tesseract
-    else
-      fail "Cannot detect package manager. Install tesseract-ocr manually and retry."
-    fi
-  else
-    fail "Unsupported OS: $os. Install tesseract manually and retry."
-  fi
-}
-
 if command -v tesseract &>/dev/null; then
   ok "Tesseract found ($(tesseract --version 2>&1 | head -1))"
 else
-  install_tesseract
-  command -v tesseract &>/dev/null || fail "Tesseract installation failed."
-  ok "Tesseract installed ($(tesseract --version 2>&1 | head -1))"
+  fail "Tesseract not found. Install it before running this script."
 fi
 
 # ── 5. spaCy model en_core_web_sm ─────────────────────────────────────────────
