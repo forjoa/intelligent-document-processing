@@ -64,8 +64,8 @@ fi
 
 if [[ -f "requirements.txt" ]]; then
   warn "Installing/updating dependencies from requirements.txt"
-  pip install --quiet --upgrade pip
-  pip install --quiet -r requirements.txt
+  pip install --upgrade pip
+  pip install -r requirements.txt
   ok "Dependencies installed"
 else
   warn "requirements.txt not found — skipping dependency install"
