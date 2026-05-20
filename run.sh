@@ -115,25 +115,35 @@ else
   ok "spaCy model en_core_web_sm downloaded"
 fi
 
+# ── parse flags ───────────────────────────────────────────────────────────────
+RUN_UI=true
+for arg in "$@"; do
+  [[ "$arg" == "--no-ui" ]] && RUN_UI=false
+done
+
 # ── 7. UI dev server ──────────────────────────────────────────────────────────
-if ! command -v node &>/dev/null; then
-  fail "Node.js not found. Install it from https://nodejs.org and retry."
+if [[ "$RUN_UI" == true ]]; then
+  if ! command -v node &>/dev/null; then
+    fail "Node.js not found. Install it from https://nodejs.org and retry."
+  fi
+  ok "Node.js found ($(node --version))"
+
+  UI_DIR="$SCRIPT_DIR/ui"
+
+  if [[ ! -d "$UI_DIR/node_modules" ]]; then
+    warn "UI dependencies not installed — running npm install"
+    npm --prefix "$UI_DIR" install --silent
+    ok "UI dependencies installed"
+  fi
+
+  npm --prefix "$UI_DIR" run start &
+  UI_PID=$!
+  ok "UI dev server started (PID $UI_PID) on http://localhost:5173"
+
+  trap 'kill "$UI_PID" 2>/dev/null || true' EXIT
+else
+  ok "UI skipped (--no-ui)"
 fi
-ok "Node.js found ($(node --version))"
-
-UI_DIR="$SCRIPT_DIR/ui"
-
-if [[ ! -d "$UI_DIR/node_modules" ]]; then
-  warn "UI dependencies not installed — running npm install"
-  npm --prefix "$UI_DIR" install --silent
-  ok "UI dependencies installed"
-fi
-
-npm --prefix "$UI_DIR" run start &
-UI_PID=$!
-ok "UI dev server started (PID $UI_PID) on http://localhost:5173"
-
-trap 'kill "$UI_PID" 2>/dev/null || true' EXIT
 
 # ── 8. Launch ─────────────────────────────────────────────────────────────────
 echo ""
