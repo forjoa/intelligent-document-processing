@@ -35,14 +35,15 @@ done
 [[ -z "$PYTHON" ]] && fail "Python 3.11+ not found. Install it and retry."
 ok "Python $($PYTHON --version 2>&1 | awk '{print $2}') found ($PYTHON)"
 
-# ── 2. .env and DATABASE_URL ──────────────────────────────────────────────────
-[[ -f ".env" ]] || fail ".env file not found. Create one at the project root."
-ok ".env file exists"
+# ── 2. DATABASE_URL ───────────────────────────────────────────────────────────
+if [[ -f ".env" ]]; then
+  ok ".env file exists"
+fi
 
-if grep -qE '^\s*DATABASE_URL\s*=' .env; then
-  ok "DATABASE_URL is defined in .env"
+if [[ -n "${DATABASE_URL:-}" ]] || { [[ -f ".env" ]] && grep -qE '^\s*DATABASE_URL\s*=' .env; }; then
+  ok "DATABASE_URL is defined"
 else
-  fail "DATABASE_URL is not defined in .env. Add it and retry."
+  fail "DATABASE_URL is not set. Define it in .env or as an environment variable."
 fi
 
 # ── 3. venv ───────────────────────────────────────────────────────────────────
