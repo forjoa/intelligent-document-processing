@@ -19,14 +19,16 @@ def get_paddle_ocr() -> Any:
 
 
 def get_nlp() -> Any:
+    global _nlp
     if _nlp is None:
-        raise RuntimeError("spaCy model is not loaded")
+        load_nlp()
     return _nlp
 
 
 def get_embedder() -> Any:
+    global _embedder
     if _embedder is None:
-        raise RuntimeError("Sentence transformer is not loaded")
+        load_embedder()
     return _embedder
 
 

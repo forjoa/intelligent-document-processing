@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 
 from app.api import documents, health
 from app.core.database import init_db
-from app.core.dependencies import load_embedder, load_nlp, load_paddle_ocr
+from app.core.dependencies import load_paddle_ocr
 from app.core.exceptions import (
     DatabaseError,
     DocumentProcessingError,
@@ -42,8 +42,6 @@ _EXCEPTION_CODE: dict[type[DocumentProcessingError], str] = {
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     load_paddle_ocr()
-    load_nlp()
-    load_embedder()
     await init_db()
     yield
 
